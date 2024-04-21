@@ -68,6 +68,14 @@ class LT_OP_Panel(bpy.types.Panel):
         col.label(text="Fill + Back Type:")
         col.prop(ppts, "secondarytype", text="")
 
+def get_light_data(name:str, type:any):
+    backData = bpy.data.lights.get(name)
+    if backData:
+        backData = bpy.data.lights[name]
+    else:
+        backData = bpy.data.lights.new(name=name, type=type)
+    return backData
+
 class LT_OT_TriLighting(Operator):
     bl_idname = "light_tool.trilighting"
     bl_label = "Tri-Lighting Creator"
@@ -80,6 +88,12 @@ class LT_OT_TriLighting(Operator):
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
+
+    def update_energy(self,context):
+        ppts = bpy.context.scene.LightToolAttr
+        for light_data_name in ['TriLamp-Back']:
+            light_data = get_light_data(name=light_data_name,type=ppts.primarytype)
+            light_data.energy = ppts.energy
 
     def execute(self, context):
         ppts = bpy.context.scene.LightToolAttr
@@ -147,7 +161,7 @@ class LT_OT_TriLighting(Operator):
             backx = obj_position.x + ppts.distance * singleback_vector.x
             backy = obj_position.y + ppts.distance * singleback_vector.y
 
-            backData = bpy.data.lights.new(name="TriLamp-Back", type=ppts.secondarytype)
+            backData = get_light_data(name="TriLamp-Back", type=ppts.secondarytype)
             backData.energy = backEnergy
 
             backLamp = bpy.data.objects.new(name="TriLamp-Back", object_data=backData)
@@ -214,6 +228,11 @@ class LT_OT_TriLighting(Operator):
 def menu_func(self, context):
     self.layout.operator(LT_OT_TriLighting.bl_idname, text="3 Point Lights", icon='LIGHT')
 
+def update_energy(self,context):
+    # bpy.ops.light_tool.trilighting.update_energy()
+    # LT_OT_TriLighting.update_energy()
+    pass
+
 class LT_Properties(bpy.types.PropertyGroup):
     height: FloatProperty(
             name="Height",
@@ -228,7 +247,8 @@ class LT_Properties(bpy.types.PropertyGroup):
     energy: IntProperty(
             name="Base Energy",
             default=3,
-            min=1
+            min=1,
+            update=update_energy
             ) # type: ignore
     contrast: IntProperty(
             name="Contrast",

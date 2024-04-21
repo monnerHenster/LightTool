@@ -89,12 +89,6 @@ class LT_OT_TriLighting(Operator):
     def poll(cls, context):
         return context.active_object is not None
 
-    def update_energy(self,context):
-        ppts = bpy.context.scene.LightToolAttr
-        for light_data_name in ['TriLamp-Back']:
-            light_data = get_light_data(name=light_data_name,type=ppts.primarytype)
-            light_data.energy = ppts.energy
-
     def execute(self, context):
         ppts = bpy.context.scene.LightToolAttr
 
@@ -229,6 +223,10 @@ def menu_func(self, context):
     self.layout.operator(LT_OT_TriLighting.bl_idname, text="3 Point Lights", icon='LIGHT')
 
 def update_energy(self,context):
+    ppts = bpy.context.scene.LightToolAttr
+    for light_data_name in ['TriLamp-Back']:
+        light_data = get_light_data(name=light_data_name,type=ppts.primarytype)
+        light_data.energy = ppts.energy
     # bpy.ops.light_tool.trilighting.update_energy()
     # LT_OT_TriLighting.update_energy()
     pass

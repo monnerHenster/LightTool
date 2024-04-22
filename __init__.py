@@ -23,12 +23,15 @@ from bpy.props import (
         EnumProperty,
         FloatProperty,
         IntProperty,
+        StringProperty,
         )
 from math import (
         sin, cos,
         radians,
         sqrt,
         )
+
+DEFAULT_LIGHT = ['key','back','fill']
 
 class LT_OP_Panel(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
@@ -224,13 +227,26 @@ def menu_func(self, context):
 
 def update_energy(self,context):
     ppts = bpy.context.scene.LightToolAttr
-    for light_data_name in ['TriLamp-Back']:
-        light_data = get_light_data(name=light_data_name,type=ppts.primarytype)
-        light_data.energy = ppts.energy
-    # bpy.ops.light_tool.trilighting.update_energy()
-    # LT_OT_TriLighting.update_energy()
-    pass
 
+    if(ppts.contrast > 0):
+        get_light_data(name='TriLamp-Key',type=ppts.primarytype).energy = ppts.energy
+        get_light_data(name='TriLamp-Back',type=ppts.primarytype).energy = (ppts.energy / 100) * abs(ppts.contrast)
+        get_light_data(name='TriLamp-Fill',type=ppts.primarytype).energy = (ppts.energy / 100) * abs(ppts.contrast)
+    else:
+        get_light_data(name='TriLamp-Key',type=ppts.primarytype).energy = (ppts.energy / 100) * abs(ppts.contrast)
+        get_light_data(name='TriLamp-Back',type=ppts.primarytype).energyy = ppts.energy
+        get_light_data(name='TriLamp-Fill',type=ppts.primarytype).energyy = ppts.energy
+
+class LT_PT_Lights(bpy.types.PropertyGroup):
+    name: StringProperty(
+            name="name",
+            default="key"
+            ) # type: ignore
+    type: StringProperty(
+            name="type",
+            default="AREA"
+            ) # type: ignore
+    
 class LT_Properties(bpy.types.PropertyGroup):
     height: FloatProperty(
             name="Height",
@@ -299,17 +315,21 @@ def register():
     bpy.utils.register_class(LT_OT_TriLighting)
     bpy.utils.register_class(LT_Properties)
     bpy.utils.register_class(LT_OP_Panel)
+    bpy.utils.register_class(LT_PT_Lights)
     bpy.types.VIEW3D_MT_light_add.append(menu_func)
 
     bpy.types.Scene.LightToolAttr = bpy.props.PointerProperty(type=LT_Properties)
+    bpy.types.Scene.LT_lights = bpy.props.CollectionProperty(type=LT_Properties)
 
 def unregister():
     bpy.utils.unregister_class(LT_OT_TriLighting)
     bpy.utils.unregister_class(LT_Properties)
     bpy.utils.unregister_class(LT_OP_Panel)
+    bpy.utils.unregister_class(LT_PT_Lights)
     bpy.types.VIEW3D_MT_light_add.remove(menu_func)
 
     del bpy.types.Scene.LightToolAttr
+    del bpy.types.Scene.LT_lights
 
 if __name__ == "__main__":
     register()

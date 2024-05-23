@@ -237,6 +237,121 @@ def update_energy(self,context):
         get_light_data(name='TriLamp-Back',type=ppts.primarytype).energyy = ppts.energy
         get_light_data(name='TriLamp-Fill',type=ppts.primarytype).energyy = ppts.energy
 
+def update_back_angle(self,context):
+    obj = bpy.context.view_layer.objects.active
+    camera = bpy.data.objects.get('Camera')
+    obj_position = obj.location
+    cam_position = camera.location
+
+    delta_position = cam_position - obj_position
+    vector_length = sqrt(
+                    (pow(delta_position.x, 2) +
+                        pow(delta_position.y, 2) +
+                        pow(delta_position.z, 2))
+                    )
+    if not vector_length:
+        # division by zero most likely
+        self.report({'WARNING'},
+                    "Operation Cancelled. No viable object in the scene")
+
+        return {'CANCELLED'}
+
+    single_vector = (1 / vector_length) * delta_position
+
+    # Calc back position
+    ppts = bpy.context.scene.LightToolAttr
+    singleback_vector = single_vector.copy()
+    singleback_vector.x = cos(radians(ppts.backangle)) * single_vector.x + \
+                            (-sin(radians(ppts.backangle)) * single_vector.y)
+
+    singleback_vector.y = sin(radians(ppts.backangle)) * single_vector.x + \
+                            (cos(radians(ppts.backangle)) * single_vector.y)
+
+    backx = obj_position.x + ppts.distance * singleback_vector.x
+    backy = obj_position.y + ppts.distance * singleback_vector.y
+
+    backLamp = bpy.data.objects.get("TriLamp-Back")
+    backLamp.location = (backx, backy, ppts.height)
+
+def update_left_angle(self,context):
+    obj = bpy.context.view_layer.objects.active
+    camera = bpy.data.objects.get('Camera')
+    obj_position = obj.location
+    cam_position = camera.location
+
+    delta_position = cam_position - obj_position
+    vector_length = sqrt(
+                    (pow(delta_position.x, 2) +
+                        pow(delta_position.y, 2) +
+                        pow(delta_position.z, 2))
+                    )
+    if not vector_length:
+        # division by zero most likely
+        self.report({'WARNING'},
+                    "Operation Cancelled. No viable object in the scene")
+
+        return {'CANCELLED'}
+
+    single_vector = (1 / vector_length) * delta_position
+
+    # Calc back position
+    ppts = bpy.context.scene.LightToolAttr
+    singleback_vector = single_vector.copy()
+    singleback_vector.x = cos(radians(-ppts.leftangle)) * single_vector.x + \
+                            (-sin(radians(-ppts.leftangle)) * single_vector.y)
+
+    singleback_vector.y = sin(radians(-ppts.leftangle)) * single_vector.x + \
+                            (cos(radians(-ppts.leftangle)) * single_vector.y)
+    
+    # singleleft_vector.x = cos(radians(-ppts.leftangle)) * single_vector.x + \
+    #                     (-sin(radians(-ppts.leftangle)) * single_vector.y)
+    # singleleft_vector.y = sin(radians(-ppts.leftangle)) * single_vector.x + \
+    #                     (cos(radians(-ppts.leftangle)) * single_vector.y)
+    # leftx = obj_position.x + ppts.distance * singleleft_vector.x
+    # lefty = obj_position.y + ppts.distance * singleleft_vector.y
+
+    backx = obj_position.x + ppts.distance * singleback_vector.x
+    backy = obj_position.y + ppts.distance * singleback_vector.y
+
+    backLamp = bpy.data.objects.get("TriLamp-Key")
+    backLamp.location = (backx, backy, ppts.height)
+
+def update_right_angle(self,context):
+    obj = bpy.context.view_layer.objects.active
+    camera = bpy.data.objects.get('Camera')
+    obj_position = obj.location
+    cam_position = camera.location
+
+    delta_position = cam_position - obj_position
+    vector_length = sqrt(
+                    (pow(delta_position.x, 2) +
+                        pow(delta_position.y, 2) +
+                        pow(delta_position.z, 2))
+                    )
+    if not vector_length:
+        # division by zero most likely
+        self.report({'WARNING'},
+                    "Operation Cancelled. No viable object in the scene")
+
+        return {'CANCELLED'}
+
+    single_vector = (1 / vector_length) * delta_position
+
+    # Calc back position
+    ppts = bpy.context.scene.LightToolAttr
+    singleback_vector = single_vector.copy()
+    singleback_vector.x = cos(radians(ppts.rightangle)) * single_vector.x + \
+                            (-sin(radians(ppts.rightangle)) * single_vector.y)
+
+    singleback_vector.y = sin(radians(ppts.rightangle)) * single_vector.x + \
+                            (cos(radians(ppts.rightangle)) * single_vector.y)
+
+    backx = obj_position.x + ppts.distance * singleback_vector.x
+    backy = obj_position.y + ppts.distance * singleback_vector.y
+
+    backLamp = bpy.data.objects.get("TriLamp-Fill")
+    backLamp.location = (backx, backy, ppts.height)
+
 class LT_PT_Lights(bpy.types.PropertyGroup):
     name: StringProperty(
             name="name",
@@ -260,7 +375,7 @@ class LT_Properties(bpy.types.PropertyGroup):
             ) # type: ignore
     energy: IntProperty(
             name="Base Energy",
-            default=3,
+            default=50,
             min=1,
             update=update_energy
             ) # type: ignore
@@ -273,20 +388,23 @@ class LT_Properties(bpy.types.PropertyGroup):
     leftangle: IntProperty(
             name="Left Angle",
             default=26,
-            min=1, max=90,
-            subtype="ANGLE"
+            min=1, max=180,
+            subtype="ANGLE",
+            update=update_left_angle
             ) # type: ignore
     rightangle: IntProperty(
             name="Right Angle",
             default=45,
-            min=1, max=90,
-            subtype="ANGLE"
+            min=1, max=180,
+            subtype="ANGLE",
+            update=update_right_angle
             ) # type: ignore
     backangle: IntProperty(
             name="Back Angle",
             default=235,
             min=90, max=270,
-            subtype="ANGLE"
+            subtype="ANGLE",
+            update=update_back_angle
             ) # type: ignore
     Light_Type_List = [
             ('POINT', "Point", "Point Light"),
@@ -316,7 +434,7 @@ def register():
     bpy.utils.register_class(LT_Properties)
     bpy.utils.register_class(LT_OP_Panel)
     bpy.utils.register_class(LT_PT_Lights)
-    bpy.types.VIEW3D_MT_light_add.append(menu_func)
+    # bpy.types.VIEW3D_MT_light_add.append(menu_func)
 
     bpy.types.Scene.LightToolAttr = bpy.props.PointerProperty(type=LT_Properties)
     bpy.types.Scene.LT_lights = bpy.props.CollectionProperty(type=LT_Properties)
@@ -326,7 +444,7 @@ def unregister():
     bpy.utils.unregister_class(LT_Properties)
     bpy.utils.unregister_class(LT_OP_Panel)
     bpy.utils.unregister_class(LT_PT_Lights)
-    bpy.types.VIEW3D_MT_light_add.remove(menu_func)
+    # bpy.types.VIEW3D_MT_light_add.remove(menu_func)
 
     del bpy.types.Scene.LightToolAttr
     del bpy.types.Scene.LT_lights
